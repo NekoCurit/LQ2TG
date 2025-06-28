@@ -4,7 +4,7 @@ import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContext
 import dev.inmo.tgbotapi.extensions.behaviour_builder.BehaviourContextReceiver
 import dev.inmo.tgbotapi.extensions.behaviour_builder.triggers_handling.onContentMessage
 import dev.inmo.tgbotapi.utils.extensions.threadIdOrNull
-import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.getUserId
+import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.getFromTopicId
 import net.nekocurit.lq2tg.forward.LQ2TGForward
 import net.nekocurit.lq2tg.forward.tg2o.Telegram2OneBotSendStatic
 
@@ -15,19 +15,19 @@ class ForwardTelegramBotListener(val task: LQ2TGForward): BehaviourContextReceiv
             if (message.chat.id.chatId.long == task.config.telegram.groupId) {
                 val topicId = message.threadIdOrNull?.long ?: return@onContentMessage
 
-                task.system.databaseManager.getUserId(task.name, topicId)
-                    ?.also { userId ->
+                task.system.databaseManager.getFromTopicId(task.name, topicId)
+                    ?.also { data ->
                         runCatching {
                             Telegram2OneBotSendStatic.sends
                                 .firstNotNullOfOrNull { send ->
-                                    send.handle(task.oneBot, this.bot, userId, message.content)
+                                    send.handle(task.oneBot, this.bot, data.userId, message.content)
                                 }
                                 ?.also { result ->
-                                    task.system.logger.info("[${task.name}] [发送消息] [${userId}] ${result.description}")
+                                    task.system.logger.info("[${task.name}] [发送消息] [${data.userId}] ${result.description}")
                                 }
                         }
                             .onFailure { e ->
-                                task.system.logger.warn("[${task.name}] [发送消息] [${userId}] 失败", e)
+                                task.system.logger.warn("[${task.name}] [发送消息] [${data.userId}] 失败", e)
                             }
 
                     }

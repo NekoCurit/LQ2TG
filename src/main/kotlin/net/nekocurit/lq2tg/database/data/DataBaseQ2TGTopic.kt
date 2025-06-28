@@ -17,6 +17,10 @@ object DataBaseQ2TGTopic : Table("q2tg_topic") {
      * 目标平台的 Topic Id
      */
     val topicId = long("topic_id")
+    /**
+     * 原始平台的用户名
+     */
+    val title = text("title")
 
     override val primaryKey = PrimaryKey(id)
 }
