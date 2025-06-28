@@ -12,6 +12,7 @@ import dev.inmo.tgbotapi.utils.RGBColor
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.deleteTopic
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.getTopicOrCreate
 import net.nekocurit.lq2tg.forward.LQ2TGForward
+import net.nekocurit.lq2tg.forward.o2tg.impl.OneBot2TelegramArrayStatic
 
 class ForwardOneBotListener(val task: LQ2TGForward): OneBotListener {
 
@@ -30,15 +31,20 @@ class ForwardOneBotListener(val task: LQ2TGForward): OneBotListener {
                     ).messageThreadId.long
                 }
                 .also { topicId ->
-                    val description = message.rawMessage
-
-                    task.telegramBot.sendMessage(
-                        chatId = ChatId(RawChatId(task.config.telegram.groupId)),
-                        text = message.rawMessage,
-                        threadId = MessageThreadId(topicId)
-                    )
-
-                    task.system.logger.info("[${task.name}] [接收消息] [${message.userId}] $description")
+                        message.message
+                        .joinToString { message ->
+                            OneBot2TelegramArrayStatic.parses
+                                .firstNotNullOfOrNull { it.parse(task.oneBot, message) }
+                                ?: message.toString()
+                        }
+                        .also { sendMessage ->
+                            task.telegramBot.sendMessage(
+                                chatId = ChatId(RawChatId(task.config.telegram.groupId)),
+                                text = sendMessage,
+                                threadId = MessageThreadId(topicId)
+                            )
+                            task.system.logger.info("[${task.name}] [接收消息] [${message.userId}] $sendMessage")
+                        }
                 }
         }
             .onFailure { e ->
