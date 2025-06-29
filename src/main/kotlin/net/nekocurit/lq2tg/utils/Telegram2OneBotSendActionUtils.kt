@@ -9,11 +9,11 @@ import net.nekocurit.lq2tg.forward.tg2o.Telegram2OneBotSendAction
 import java.util.Base64
 
 object Telegram2OneBotSendActionUtils {
-    suspend fun Telegram2OneBotSendAction.sendMediaAndDescription(content: MediaContent, description: String) {
+    suspend fun Telegram2OneBotSendAction.sendMediaAndDescription(segmentType: SegmentType, content: MediaContent, description: String) {
         val data = telegramBot.downloadFile(telegramBot.getFileAdditionalInfo(content.media.fileId))
 
         sendMessageAndSetDescription(mutableListOf<ArrayMessage>().apply {
-            add(ArrayMessage(SegmentType.record,ArrayMessage.Data(
+            add(ArrayMessage(segmentType,ArrayMessage.Data(
                 file = "base64://${Base64.getEncoder().encodeToString(data)}"
             )))
         }, description)
