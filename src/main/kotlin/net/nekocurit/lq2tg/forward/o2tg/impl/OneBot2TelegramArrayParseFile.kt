@@ -9,37 +9,45 @@ import dev.inmo.tgbotapi.requests.abstracts.InputFile
 import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayAction
 import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayParse
 
-class OneBot2TelegramArrayParseFile: OneBot2TelegramArrayParse {
+open class OneBot2TelegramArrayParseFile: OneBot2TelegramArrayParse {
+
+    open val segmentType = SegmentType.file
+
     @OptIn(OneBot11CompatibilityApi::class)
     override suspend fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage) {
-        if (message.type == SegmentType.file) {
+        if (message.type == segmentType) {
             // getFile 是耗时操作
             action.beUploading()
             val url = action.oneBot.getFile(message.data.fileId!!).url
             action.beUploading()
 
             var isLocalFile = false
-
-            action.cancelTextMessage(
-                action.telegramBot.sendDocument(
-                    chatId = action.sendChatId,
-                    threadId = action.sendThread,
-                    document = when {
-                        url.startsWith("http") -> InputFile.fromUrl(url)
-                        else -> InputFile.fromFile(action.task.config.oneBot.localFile.apply(url))
-                            .also {
-                                isLocalFile = true
-                            }
+            val file = when {
+                url.startsWith("http") -> InputFile.fromUrl(url)
+                else -> InputFile.fromFile(action.task.config.oneBot.localFile.apply(url))
+                    .also {
+                        isLocalFile = true
                     }
-                ),
-                description = "[文件] $url"
-            )
+            }
+
+            action.upload(url, file)
 
             if (isLocalFile && action.task.config.oneBot.localFile.autoDelete) action.task.config.oneBot.localFile.apply(url).delete()
         }
     }
 
-    suspend fun OneBot2TelegramArrayAction.beUploading() {
+    open suspend fun OneBot2TelegramArrayAction.upload(url: String, file: InputFile) {
+        cancelTextMessage(
+            telegramBot.sendDocument(
+                chatId = sendChatId,
+                threadId = sendThread,
+                document = file
+            ),
+            description = "[文件] $url"
+        )
+    }
+
+    open suspend fun OneBot2TelegramArrayAction.beUploading() {
         telegramBot.sendActionUploadDocument(
             chatId = sendChatId,
             threadId = sendThread
