@@ -7,14 +7,20 @@ import dev.inmo.tgbotapi.extensions.api.chat.forum.createForumTopic
 import dev.inmo.tgbotapi.extensions.api.chat.forum.editForumTopic
 import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.types.ChatId
+import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.MessageThreadId
 import dev.inmo.tgbotapi.types.RawChatId
+import dev.inmo.tgbotapi.types.ReplyParameters
 import dev.inmo.tgbotapi.utils.RGBColor
+import net.nekocurit.lq2tg.data.enums.EnumEntityType
+import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGMessageIdExtensions.createMessageLink
+import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGMessageIdExtensions.getMessageLink
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.deleteTopic
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.getTopicOrCreate
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.updateTopic
 import net.nekocurit.lq2tg.forward.LQ2TGForward
-import net.nekocurit.lq2tg.forward.o2tg.impl.OneBot2TelegramArrayStatic
+import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayAction
+import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayStatic
 
 class ForwardOneBotListener(val task: LQ2TGForward): OneBotListener {
 
@@ -47,19 +53,46 @@ class ForwardOneBotListener(val task: LQ2TGForward): OneBotListener {
                         )
                     }
 
-                    message.message
-                        .joinToString { message ->
-                            OneBot2TelegramArrayStatic.parses
-                                .firstNotNullOfOrNull { it.parse(task.oneBot, message) }
-                                ?: message.toString()
+
+                    val action = OneBot2TelegramArrayAction(
+                        action = task.oneBot,
+                        system = task.system,
+                        entityPlatform = task.name,
+                        entityFromType = EnumEntityType.PRIVATE,
+                        entityFromId = message.userId.toString(),
+                        entityMessageId = message.messageId.toString()
+                    )
+
+                    message.message.forEach { array ->
+                        OneBot2TelegramArrayStatic.parses.forEach { parser ->
+                            parser.parse(action, array)
                         }
-                        .also { sendMessage ->
-                            task.telegramBot.sendMessage(
-                                chatId = ChatId(RawChatId(task.config.telegram.groupId)),
-                                text = sendMessage,
-                                threadId = MessageThreadId(data.topicId)
+                    }
+
+                    task.telegramBot.sendMessage(
+                        chatId = ChatId(RawChatId(task.config.telegram.groupId)),
+                        threadId = MessageThreadId(data.topicId),
+                        text = action.sendTextMessageBuilder.toString(),
+                        replyParameters = action
+                            .replyMessageId
+                            .takeIf { it != 0L }
+                            ?.let { replyMessageId ->
+                                ReplyParameters(
+                                    chatIdentifier = ChatId(RawChatId(task.config.telegram.groupId)),
+                                    messageId = MessageId(replyMessageId),
+                                    allowSendingWithoutReply = true
+                                )
+                            }
+                    )
+                        .also { sentMessage ->
+                            task.system.databaseManager.createMessageLink(
+                                id = sentMessage.messageId.long,
+                                entityPlatform = task.name,
+                                entityFromType = EnumEntityType.PRIVATE,
+                                entityFromId = message.userId.toString(),
+                                entityMessageId = message.messageId.toString()
                             )
-                            task.system.logger.info("[${task.name}] [接收消息] [${message.userId}] $sendMessage")
+                            task.system.logger.info("[${task.name}] [接收消息] [${message.userId}] ${action.sendTextMessageBuilder}")
                         }
                 }
         }

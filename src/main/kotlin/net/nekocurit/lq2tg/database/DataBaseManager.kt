@@ -1,6 +1,7 @@
 package net.nekocurit.lq2tg.database
 
 import net.nekocurit.lq2tg.LQ2TG
+import net.nekocurit.lq2tg.database.data.DataBaseQ2TGMessageId
 import net.nekocurit.lq2tg.database.data.DataBaseQ2TGTopic
 import org.jetbrains.exposed.sql.Database
 import org.jetbrains.exposed.sql.SchemaUtils
@@ -18,7 +19,7 @@ class DataBaseManager(val base: LQ2TG) {
         )
 
         transaction(database) {
-            SchemaUtils.create(DataBaseQ2TGTopic)
+            SchemaUtils.create(DataBaseQ2TGTopic, DataBaseQ2TGMessageId)
         }
 
         base.logger.info("连接数据路成功")
