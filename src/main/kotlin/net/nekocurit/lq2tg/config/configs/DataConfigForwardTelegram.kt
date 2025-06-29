@@ -9,5 +9,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 class DataConfigForwardTelegram(
     val botToken: String = "",
+    val proxy: DataConfigForwardTelegramProxy = DataConfigForwardTelegramProxy(),
     val groupId: Long = 0L
 )
