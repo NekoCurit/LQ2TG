@@ -3,5 +3,5 @@ package net.nekocurit.lq2tg.forward.o2tg
 import cn.rtast.rob.event.raw.message.ArrayMessage
 
 interface OneBot2TelegramArrayParse {
-    fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage)
+    suspend fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage)
 }

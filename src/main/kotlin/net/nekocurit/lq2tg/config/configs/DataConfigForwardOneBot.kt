@@ -9,5 +9,6 @@ import kotlinx.serialization.Serializable
 @Serializable
 class DataConfigForwardOneBot(
     val url: String = "ws://localhost:8080",
-    val token: String? = ""
+    val token: String? = "",
+    var localFile: DataConfigForwardOneBotLocalFile = DataConfigForwardOneBotLocalFile()
 )

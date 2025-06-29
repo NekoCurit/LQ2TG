@@ -7,7 +7,7 @@ import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayAction
 import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayParse
 
 class OneBot2TelegramArrayParseReply: OneBot2TelegramArrayParse {
-    override fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage) {
+    override suspend fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage) {
         if (message.type == SegmentType.reply) {
             action.system.databaseManager
                 .getMessageLink(

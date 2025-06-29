@@ -5,16 +5,12 @@ import cn.rtast.rob.onebot.OneBotListener
 import dev.inmo.tgbotapi.bot.exceptions.CommonRequestException
 import dev.inmo.tgbotapi.extensions.api.chat.forum.createForumTopic
 import dev.inmo.tgbotapi.extensions.api.chat.forum.editForumTopic
-import dev.inmo.tgbotapi.extensions.api.send.sendMessage
 import dev.inmo.tgbotapi.types.ChatId
-import dev.inmo.tgbotapi.types.MessageId
 import dev.inmo.tgbotapi.types.MessageThreadId
 import dev.inmo.tgbotapi.types.RawChatId
-import dev.inmo.tgbotapi.types.ReplyParameters
 import dev.inmo.tgbotapi.utils.RGBColor
 import net.nekocurit.lq2tg.data.enums.EnumEntityType
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGMessageIdExtensions.createMessageLink
-import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGMessageIdExtensions.getMessageLink
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.deleteTopic
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.getTopicOrCreate
 import net.nekocurit.lq2tg.database.extensions.DataManagerQ2TGTopicExtensions.updateTopic
@@ -53,37 +49,27 @@ class ForwardOneBotListener(val task: LQ2TGForward): OneBotListener {
                         )
                     }
 
-
                     val action = OneBot2TelegramArrayAction(
-                        action = task.oneBot,
+                        task = task,
+                        oneBot = task.oneBot,
+                        telegramBot = task.telegramBot,
                         system = task.system,
                         entityPlatform = task.name,
                         entityFromType = EnumEntityType.PRIVATE,
                         entityFromId = message.userId.toString(),
-                        entityMessageId = message.messageId.toString()
+                        entityMessageId = message.messageId.toString(),
+                        sendChatId = ChatId(RawChatId(task.config.telegram.groupId)),
+                        sendThread = MessageThreadId(data.topicId),
                     )
 
-                    message.message.forEach { array ->
+                    message.message.any { array ->
                         OneBot2TelegramArrayStatic.parses.forEach { parser ->
                             parser.parse(action, array)
                         }
+                        return@any action.otherMessage != null
                     }
 
-                    task.telegramBot.sendMessage(
-                        chatId = ChatId(RawChatId(task.config.telegram.groupId)),
-                        threadId = MessageThreadId(data.topicId),
-                        text = action.sendTextMessageBuilder.toString(),
-                        replyParameters = action
-                            .replyMessageId
-                            .takeIf { it != 0L }
-                            ?.let { replyMessageId ->
-                                ReplyParameters(
-                                    chatIdentifier = ChatId(RawChatId(task.config.telegram.groupId)),
-                                    messageId = MessageId(replyMessageId),
-                                    allowSendingWithoutReply = true
-                                )
-                            }
-                    )
+                    action.getOtherMessageOrSendText()
                         .also { sentMessage ->
                             task.system.databaseManager.createMessageLink(
                                 id = sentMessage.messageId.long,
@@ -92,7 +78,7 @@ class ForwardOneBotListener(val task: LQ2TGForward): OneBotListener {
                                 entityFromId = message.userId.toString(),
                                 entityMessageId = message.messageId.toString()
                             )
-                            task.system.logger.info("[${task.name}] [接收消息] [${message.userId}] ${action.sendTextMessageBuilder}")
+                            task.system.logger.info("[${task.name}] [接收消息] [${message.userId}] ${action.description}")
                         }
                 }
         }

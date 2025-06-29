@@ -6,9 +6,9 @@ import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayAction
 import net.nekocurit.lq2tg.forward.o2tg.OneBot2TelegramArrayParse
 
 class OneBot2TelegramArrayParseImage: OneBot2TelegramArrayParse {
-    override fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage) {
+    override suspend fun parse(action: OneBot2TelegramArrayAction, message: ArrayMessage) {
         if (message.type == SegmentType.image) {
-            action.sendTextMessageBuilder.append("${message.data.summary ?: "[图片]"} ${message.data.url}")
+            action.sendTextMessageBuilder.append("${message.data.summary?.takeIf { it.isNotEmpty() } ?: "[图片]"} ${message.data.url}")
         }
     }
 }
