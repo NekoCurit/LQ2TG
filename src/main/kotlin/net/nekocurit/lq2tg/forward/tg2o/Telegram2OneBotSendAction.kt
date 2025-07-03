@@ -5,8 +5,10 @@ import cn.rtast.rob.onebot.OneBotAction
 import dev.inmo.tgbotapi.bot.TelegramBot
 import net.nekocurit.lq2tg.LQ2TG
 import net.nekocurit.lq2tg.data.enums.EnumEntityType
+import net.nekocurit.lq2tg.forward.LQ2TGForward
 
 class Telegram2OneBotSendAction(
+    val task: LQ2TGForward,
     val oneBot: OneBotAction,
     val telegramBot: TelegramBot,
     val system: LQ2TG,

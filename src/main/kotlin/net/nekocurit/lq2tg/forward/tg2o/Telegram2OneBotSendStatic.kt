@@ -8,6 +8,7 @@ object Telegram2OneBotSendStatic {
         Telegram2OneBotSendSticker(),
         Telegram2OneBotSendImage(),
         Telegram2OneBotSendVoice(),
-        Telegram2OneBotSendLocation()
+        Telegram2OneBotSendLocation(),
+        Telegram2OneBotSendDocument()
     )
 }

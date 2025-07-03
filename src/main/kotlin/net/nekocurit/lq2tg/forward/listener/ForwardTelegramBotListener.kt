@@ -25,6 +25,7 @@ class ForwardTelegramBotListener(val task: LQ2TGForward): BehaviourContextReceiv
                     ?.also { data ->
                         runCatching {
                             val action = Telegram2OneBotSendAction(
+                                task = task,
                                 oneBot = task.oneBot,
                                 telegramBot = this.bot,
                                 system = task.system,
@@ -43,13 +44,15 @@ class ForwardTelegramBotListener(val task: LQ2TGForward): BehaviourContextReceiv
                             }
 
                             action.messageId?.also { messageId ->
-                                task.system.databaseManager.createMessageLink(
-                                    id = message.messageId.long,
-                                    entityPlatform = task.name,
-                                    entityFromType = action.entitySendType,
-                                    entityFromId = action.entitySendId,
-                                    entityMessageId = messageId.toString()
-                                )
+                                task.system.databaseManager
+                                    .takeIf { messageId != -1L }
+                                    ?.createMessageLink(
+                                        id = message.messageId.long,
+                                        entityPlatform = task.name,
+                                        entityFromType = action.entitySendType,
+                                        entityFromId = action.entitySendId,
+                                        entityMessageId = messageId.toString()
+                                    )
                                 task.system.logger.info("[${task.name}] [发送消息] [${data.userId}] ${action.description} (${messageId})")
                             }
                         }
